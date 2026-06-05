@@ -1712,6 +1712,48 @@ function insightBlock(title, body, type) {
 }
 
 // ═══════════════════════════════════════════
+// Exportar para Sócios
+// ═══════════════════════════════════════════
+function exportForSocios() {
+  saveToLS();
+
+  // Pegar dados do localStorage
+  const stateData = JSON.stringify(state);
+  const fatStateData = JSON.stringify(fatState);
+  const saldoVal = document.getElementById('saldoInicial').value || '0';
+
+  let html = document.documentElement.outerHTML;
+
+  // Substituir a função loadState
+  html = html.replace(
+    'let state = loadState();',
+    `let state = ${stateData};`
+  );
+
+  // Substituir a função loadFatState
+  html = html.replace(
+    'let fatState = loadFatState();',
+    `let fatState = ${fatStateData};`
+  );
+
+  // Restaurar saldo inicial
+  html = html.replace(
+    /const savedSaldo = localStorage\.getItem\(NS \+ 'saldoInicial'\);/,
+    `const savedSaldo = '${saldoVal}';`
+  );
+
+  // Modo visualização
+  html = html.replace('<html lang="pt-BR">', '<html lang="pt-BR" data-mode="view">');
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bucaneiro-dashboard.html';
+  a.click();
+  showToast('success', '✓ Arquivo gerado com dados', 'Renomeie para index.html e faça upload no GitHub!');
+}
+
+// ═══════════════════════════════════════════
 // Auto-save every 30s
 // ═══════════════════════════════════════════
 setInterval(saveToLS, 30000);
