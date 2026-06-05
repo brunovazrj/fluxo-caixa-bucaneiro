@@ -598,6 +598,18 @@ const PRELOADED = {
 };
 
 // ═══════════════════════════════════════════
+// Restaurar DATES do localStorage ANTES de carregar state
+// ═══════════════════════════════════════════
+const savedDatesEarly = localStorage.getItem('bucfc_dates');
+if (savedDatesEarly) {
+  try {
+    const restoredDates = JSON.parse(savedDatesEarly);
+    DATES.length = 0;
+    restoredDates.forEach(d => DATES.push(d));
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
 // STATE — loaded from localStorage or defaults
 // ═══════════════════════════════════════════
 const NS = 'bucfc_';
@@ -1112,12 +1124,8 @@ function confirmImport() {
     return;
   }
 
-  // ── 2. Resetar DATES com as datas do CSV + projeção próxima semana ──
+  // ── 2. Resetar DATES com as datas do CSV (sem projeção) ──
   const lastCsvDate = csvDates[csvDates.length - 1];
-  const projStart = new Date(lastCsvDate + 'T12:00:00');
-  projStart.setDate(projStart.getDate() + 1);
-  const projStartIso = projStart.toISOString().split('T')[0];
-  PROJ_START = projStartIso;
 
   // Preencher datas entre a primeira e a última do CSV (inclusive dias sem pagamento)
   const allCsvRange = [];
@@ -1128,17 +1136,9 @@ function confirmImport() {
     cur.setDate(cur.getDate() + 1);
   }
 
-  // Projeção: próximos 7 dias após o último CSV
-  const projDates = [];
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(lastCsvDate + 'T12:00:00');
-    d.setDate(d.getDate() + i);
-    projDates.push(d.toISOString().split('T')[0]);
-  }
-
-  // Substituir DATES por completo
+  // Substituir DATES com apenas as datas do CSV (sem projeção)
   DATES.length = 0;
-  [...allCsvRange, ...projDates].forEach(d => DATES.push(d));
+  allCsvRange.forEach(d => DATES.push(d));
 
   // ── 3. Zerar state de pagamentos e recebíveis ──
   state.pay = {};
@@ -1174,7 +1174,7 @@ function confirmImport() {
   // Atualizar label do período
   const periodEl = document.querySelector('.period-info p');
   if (periodEl) {
-    periodEl.innerHTML = `${dFmt(DATES[0])} a ${dFmt(DATES[DATES.length-1])} &nbsp;·&nbsp; <span style="color:#3b82f6;">${dFmt(projStartIso)} em diante = Projeção</span>`;
+    periodEl.innerHTML = `${dFmt(DATES[0])} a ${dFmt(DATES[DATES.length-1])}`;
   }
 
   closeImportModal();
@@ -1767,16 +1767,6 @@ function exportForSocios() {
 const savedSaldo = localStorage.getItem(NS + 'saldoInicial');
 if (savedSaldo) {
   document.getElementById('saldoInicial').value = savedSaldo;
-}
-
-// Restaurar DATES se houver (de importações anteriores do NIBO)
-const savedDates = localStorage.getItem(NS + 'dates');
-if (savedDates) {
-  try {
-    const restoredDates = JSON.parse(savedDates);
-    DATES.length = 0;
-    restoredDates.forEach(d => DATES.push(d));
-  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════
