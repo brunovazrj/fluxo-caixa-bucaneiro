@@ -624,7 +624,12 @@ function loadState() {
 }
 
 function saveToLS() {
+  // Salva tudo: recebíveis, pagamentos, saldo inicial, datas e faturamento
   localStorage.setItem(NS + 'state', JSON.stringify(state));
+  localStorage.setItem(NS + 'fat', JSON.stringify(fatState));
+  localStorage.setItem(NS + 'saldoInicial', document.getElementById('saldoInicial').value || '0');
+  localStorage.setItem(NS + 'dates', JSON.stringify(DATES));
+
   const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
   document.getElementById('lastSaved').textContent = '✓ Salvo ' + now;
 }
@@ -1751,6 +1756,26 @@ function exportForSocios() {
   a.download = 'bucaneiro-dashboard.html';
   a.click();
   showToast('success', '✓ Arquivo gerado com dados', 'Renomeie para index.html e faça upload no GitHub!');
+}
+
+// ═══════════════════════════════════════════
+// Restaurar dados salvos no localStorage
+// ═══════════════════════════════════════════
+
+// Restaurar saldo inicial
+const savedSaldo = localStorage.getItem(NS + 'saldoInicial');
+if (savedSaldo) {
+  document.getElementById('saldoInicial').value = savedSaldo;
+}
+
+// Restaurar DATES se houver (de importações anteriores do NIBO)
+const savedDates = localStorage.getItem(NS + 'dates');
+if (savedDates) {
+  try {
+    const restoredDates = JSON.parse(savedDates);
+    DATES.length = 0;
+    restoredDates.forEach(d => DATES.push(d));
+  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════

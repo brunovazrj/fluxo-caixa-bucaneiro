@@ -11,8 +11,12 @@ import sys
 import webbrowser
 import subprocess
 import shutil
+import threading
+import http.server
+import socketserver
 from pathlib import Path
 from datetime import datetime
+from time import sleep
 
 # Cores para terminal
 class Colors:
@@ -48,18 +52,39 @@ def print_error(msg):
     print(f"{Colors.RED}✗ {msg}{Colors.RESET}")
 
 def open_local():
-    """Abre o dashboard no navegador local"""
+    """Abre o dashboard via servidor HTTP local"""
     print_info("Abrindo dashboard localmente...")
 
     if not INDEX_FILE.exists():
         print_error(f"Arquivo não encontrado: {INDEX_FILE}")
         return False
 
-    file_url = INDEX_FILE.as_uri()
-    webbrowser.open(file_url)
-    print_success(f"Dashboard aberto em: {file_url}")
-    print_info("Edite os dados no navegador e clique em '💾 Salvar'")
-    return True
+    # Inicia servidor HTTP em background
+    os.chdir(SCRIPT_DIR)
+    Handler = http.server.SimpleHTTPRequestHandler
+
+    try:
+        httpd = socketserver.TCPServer(("", 8000), Handler)
+        print_success("Servidor HTTP iniciado em http://localhost:8000")
+
+        # Abre no navegador
+        sleep(0.5)
+        webbrowser.open("http://localhost:8000")
+
+        print_info("Dashboard aberto no navegador")
+        print_info("Edite os dados e clique em '💾 Salvar'")
+        print_warning("Pressione Ctrl+C no terminal para encerrar o servidor")
+
+        # Rodando o servidor
+        httpd.serve_forever()
+        return True
+
+    except OSError as e:
+        print_error(f"Erro ao iniciar servidor: {e}")
+        print_info("A porta 8000 pode estar ocupada. Tente:")
+        print("  lsof -i :8000")
+        print("  kill -9 <PID>")
+        return False
 
 def show_menu():
     """Mostra menu de opções"""
