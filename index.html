@@ -601,12 +601,20 @@ const PRELOADED = {
 // Restaurar DATES do localStorage ANTES de carregar state
 // ═══════════════════════════════════════════
 const savedDatesEarly = localStorage.getItem('bucfc_dates');
+console.log('savedDatesEarly:', savedDatesEarly);
 if (savedDatesEarly) {
   try {
     const restoredDates = JSON.parse(savedDatesEarly);
+    console.log('✓ DATES restaurado:', restoredDates);
     DATES.length = 0;
     restoredDates.forEach(d => DATES.push(d));
-  } catch(e) {}
+    console.log('DATES agora é:', DATES);
+  } catch(e) {
+    console.error('❌ Erro ao restaurar DATES:', e);
+    alert('❌ Erro ao restaurar datas: ' + e.message);
+  }
+} else {
+  console.log('⚠ Nenhuma data salva encontrada, usando padrão');
 }
 
 // ═══════════════════════════════════════════
@@ -617,9 +625,11 @@ let state = loadState();
 
 function loadState() {
   const saved = localStorage.getItem(NS + 'state');
+  console.log('loadState - saved:', saved ? `${saved.length} chars` : 'null');
   if (saved) {
     try {
       const s = JSON.parse(saved);
+      console.log('✓ State restaurado com', Object.keys(s.pay || {}).length, 'datas');
       if (!s.payDetails) s.payDetails = {};
       return s;
     } catch(e) {}
@@ -636,14 +646,20 @@ function loadState() {
 }
 
 function saveToLS() {
-  // Salva tudo: recebíveis, pagamentos, saldo inicial, datas e faturamento
-  localStorage.setItem(NS + 'state', JSON.stringify(state));
-  localStorage.setItem(NS + 'fat', JSON.stringify(fatState));
-  localStorage.setItem(NS + 'saldoInicial', document.getElementById('saldoInicial').value || '0');
-  localStorage.setItem(NS + 'dates', JSON.stringify(DATES));
+  try {
+    // Salva tudo: recebíveis, pagamentos, saldo inicial, datas e faturamento
+    localStorage.setItem(NS + 'state', JSON.stringify(state));
+    localStorage.setItem(NS + 'fat', JSON.stringify(fatState));
+    localStorage.setItem(NS + 'saldoInicial', document.getElementById('saldoInicial').value || '0');
+    localStorage.setItem(NS + 'dates', JSON.stringify(DATES));
 
-  const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-  document.getElementById('lastSaved').textContent = '✓ Salvo ' + now;
+    const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('lastSaved').textContent = '✓ Salvo ' + now;
+    console.log('✓ Dados salvos em:', now, {state, DATES});
+  } catch(err) {
+    console.error('❌ Erro ao salvar:', err);
+    document.getElementById('lastSaved').textContent = '❌ Erro ao salvar';
+  }
 }
 
 function clearAll() {
@@ -1114,8 +1130,13 @@ function splitCSVLine(line, sep) {
 }
 
 function confirmImport() {
-  if (!pendingImportData) return;
+  console.log('confirmImport() iniciado');
+  if (!pendingImportData) {
+    console.log('❌ pendingImportData é nulo');
+    return;
+  }
   const { grouped, details, totalRows } = pendingImportData;
+  console.log('Importando:', totalRows, 'lançamentos');
 
   // ── 1. Datas presentes no CSV ──
   const csvDates = Object.keys(grouped).sort();
