@@ -314,7 +314,6 @@ body.view-mode .view-badge{display:inline-flex;align-items:center;gap:5px;}
     <span class="view-badge">👁 Modo Visualização</span>
     <span id="lastSaved" style="font-size:11px;color:rgba(255,255,255,.5);"></span>
     <button class="btn btn-green btn-sm edit-only" onclick="openImportModal()">⬆ Importar NIBO</button>
-    <button class="btn btn-ghost btn-sm edit-only" onclick="publishForPartners()">🌐 Publicar para Sócios</button>
     <button class="btn btn-ghost btn-sm" onclick="exportPDF()">📄 Salvar PDF</button>
     <button class="btn btn-accent btn-sm" onclick="exportForSocios()">📤 Exportar para Sócios</button>
     <button class="btn btn-ghost btn-sm edit-only" onclick="clearAll()">🗑 Limpar recebíveis</button>
@@ -1283,15 +1282,21 @@ if (IS_VIEW) document.body.classList.add('view-mode');
 // ═══════════════════════════════════════════
 function publishForPartners() {
   const fatData = JSON.stringify(fatState);
-  const saldoIni = document.getElementById('saldoInicial').value || '0';
+  const fcData = JSON.stringify(state);
 
   // Pega o HTML atual da página
   let html = document.documentElement.outerHTML;
 
+  // Bake fluxo de caixa data
+  html = html.replace(
+    /let state = loadState\(\);/,
+    `let state = ${fcData};`
+  );
+
   // Bake faturamento data
   html = html.replace(
-    /\/\/ FAT_BAKED_PLACEHOLDER[\s\S]*?\/\/ END_FAT_BAKED/,
-    `// FAT_BAKED_PLACEHOLDER\nconst FAT_BAKED_DATA = ${fatData};\n// END_FAT_BAKED`
+    /let fatState = loadFatState\(\);/,
+    `let fatState = ${fatData};`
   );
 
   // Ativa modo view automaticamente na versão publicada
@@ -1303,7 +1308,7 @@ function publishForPartners() {
   a.download = 'bucaneiro-dashboard.html';
   a.click();
 
-  showToast('success', '✓ Arquivo gerado', 'Arraste "bucaneiro-dashboard.html" para app.netlify.com para publicar.');
+  showToast('success', '✓ Arquivo gerado', 'Renomeie para index.html e faça upload no GitHub!');
 }
 
 // ═══════════════════════════════════════════
