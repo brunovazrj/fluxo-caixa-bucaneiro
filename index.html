@@ -779,6 +779,7 @@ function onEdit(el) {
     state.pay[d][cat] = v;
   }
   recalcAll();
+  saveToLS(); // Salva imediatamente ao editar
 }
 
 // ═══════════════════════════════════════════
